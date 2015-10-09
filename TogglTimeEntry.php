@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 class TogglTimeEntry extends Toggl{
     public static $fields = array(
@@ -14,6 +14,8 @@ class TogglTimeEntry extends Toggl{
         "tags", // a list of tag names (array of strings, not required)
         "duronly", // should Toggl show the start and stop time of this time entry? (boolean, not required)
         "at", // timestamp that is sent in the response, indicates the time item was last updated
+        'start_date',
+        'end_date'
     );
 
     public static function createATimeEntry(array $params = array()){
@@ -39,6 +41,20 @@ class TogglTimeEntry extends Toggl{
         }
         $params['method'] = "POST";
         $params['url'] = "https://www.toggl.com/api/v8/time_entries/start";
+        return self::send($params);
+    }
+
+    public static function updateTimeEntry($time_entry_id, array $params = array()){
+        foreach ($params as $name => $param){
+            if (array_search($name, self::$fields) === false){
+                return "Invalid Parameter: $name";
+            }
+            $params["time_entry"][$name] = $param;
+            unset($params[$name]);
+        }
+        if (!isset($time_entry_id)){ return "No time entry ID given."; }
+        $params['method'] = "POST";
+        $params['url'] = "https://www.toggl.com/api/v8/time_entries/" . $time_entry_id;
         return self::send($params);
     }
 

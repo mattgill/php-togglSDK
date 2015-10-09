@@ -22,13 +22,24 @@ class Toggl{
 
     private static function sendWithAuth($params) {
         $url = $params['url'];
+
+        if ($params['method'] != 'POST'){
+            $ignore_params = array('method','url');
+            $addon_params = array();
+            foreach ($params as $param_key => $param_value){
+                if (in_array($param_key, $ignore_params)){ continue; }
+                $addon_params[$param_key] = $param_value;
+            }
+            $url .= '?' . http_build_query($addon_params);
+        }
+
         if (self::$debug == true){
-            echo 'Request URL: ' . $url;
+            echo 'Request URL: ' . $url . "\n";
         }
         unset($params['url']);
         $method = $params['method'];
         if (self::$debug == true){
-            echo 'Request method: ' . $method;
+            echo 'Request method: ' . $method . "\n";
         }
         unset($params['method']);
         $curl = curl_init($url);
@@ -64,7 +75,10 @@ class Toggl{
             return $resultJson;
         } else {
             $errorMessage = 'Toggl API call failed -- Request URL: ' . $url . (is_string($params)? ' Request Data: ' . $params : null) . ' Response code: ' . $info['http_code'] . ' Raw response dump: ' . $result . ' serialized CURL info: ' . serialize($info);
-            CakeLog::write('error', $errorMessage);
+            if (self::$debug == true)
+            {
+	        echo $errorMessage . "\n";
+            }
             throw new Exception($errorMessage);
         }
     }
