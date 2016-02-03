@@ -22,8 +22,12 @@ class Toggl{
 
     private static function sendWithAuth($params) {
         $url = $params['url'];
+        unset($params['url']);
 
-        if ($params['method'] != 'POST'){
+        $method = $params['method'];
+        unset($params['method']);
+
+        if ($params['method'] === 'GET'){
             $ignore_params = array('method','url');
             $addon_params = array();
             foreach ($params as $param_key => $param_value){
@@ -33,15 +37,6 @@ class Toggl{
             $url .= '?' . http_build_query($addon_params);
         }
 
-        if (self::$debug == true){
-            echo 'Request URL: ' . $url . "\n";
-        }
-        unset($params['url']);
-        $method = $params['method'];
-        if (self::$debug == true){
-            echo 'Request method: ' . $method . "\n";
-        }
-        unset($params['method']);
         $curl = curl_init($url);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_USERPWD, self::$token . ':api_token');
@@ -52,7 +47,16 @@ class Toggl{
         if (self::$debug == true){
             echo 'API Token: ' . self::$token;
         }
-        if ($method == 'POST'){
+
+        if ($method === 'GET'){
+            $ignore_params = array('method','url');
+            $addon_params = array();
+            foreach ($params as $param_key => $param_value){
+                if (in_array($param_key, $ignore_params)){ continue; }
+                $addon_params[$param_key] = $param_value;
+            }
+            $url .= '?' . http_build_query($addon_params);
+        } else if ($method == 'POST'){
             curl_setopt($curl, CURLOPT_POST, true);
             $params = json_encode($params);
             if (self::$debug == true){
@@ -64,6 +68,11 @@ class Toggl{
                     'Content-Length: ' . strlen($params),
             ));
         }
+
+        if (self::$debug == true){
+            echo 'Request method: ' . $method . "\n";
+        }
+
         $result = curl_exec($curl);
         $info = curl_getinfo($curl);
         curl_close($curl);
